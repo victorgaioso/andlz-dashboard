@@ -1,0 +1,64 @@
+name: Atualizar Dashboard Andlz
+
+on:
+  push:
+    paths:
+      - '**.xlsx'       # Dispara quando qualquer .xlsx é atualizado
+  workflow_dispatch:    # Permite rodar manualmente pela interface do GitHub
+
+permissions:
+  contents: write       # Necessário para fazer commit do HTML gerado
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install openpyxl
+
+      - name: Encontrar planilha mais recente
+        id: find_xlsx
+        run: |
+          XLSX=$(ls *.xlsx 2>/dev/null | head -1)
+          if [ -z "$XLSX" ]; then
+            echo "ERRO: Nenhum arquivo .xlsx encontrado na raiz do repositório"
+            exit 1
+          fi
+          echo "Planilha encontrada: $XLSX"
+          echo "xlsx_file=$XLSX" >> $GITHUB_OUTPUT
+
+      - name: Gerar dashboard
+        run: python update_dashboard.py "${{ steps.find_xlsx.outputs.xlsx_file }}"
+
+      - name: Verificar se o HTML foi gerado
+        run: |
+          if [ ! -f "dashboard_andlz.html" ]; then
+            echo "ERRO: dashboard_andlz.html não foi gerado"
+            exit 1
+          fi
+          SIZE=$(wc -c < dashboard_andlz.html)
+          echo "HTML gerado com sucesso: ${SIZE} bytes"
+
+      - name: Commit e push do dashboard atualizado
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add dashboard_andlz.html
+          if git diff --staged --quiet; then
+            echo "Sem alterações no dashboard — nenhum commit necessário"
+          else
+            MONTH=$(python -c "
+          import openpyxl, sys
+          wb = openpyxl.load_workbook('${{ steps.find_xlsx.outputs.xlsx_file }}', data_only=True)
+          ws = wb['Consolidated']
+          for r in range(1,100):
+              if ws.cell(r,4).value and '01 Receitas' in
