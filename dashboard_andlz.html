@@ -125,6 +125,113 @@
 </style>
 </head>
 <body>
+
+<!-- ── TELA DE SENHA ── -->
+<div id="lock-screen" style="
+  position:fixed;inset:0;z-index:9999;
+  background:#003354;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  font-family:'DM Sans',sans-serif;
+">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;"></div>
+  <div style="position:relative;text-align:center;width:320px;">
+    <!-- Logo -->
+    <div style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+        <div style="width:38px;height:38px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.55);display:flex;align-items:center;justify-content:center;">
+          <div style="width:20px;height:20px;border-radius:50%;border:1.5px solid #fff;"></div>
+        </div>
+        <div style="text-align:left;">
+          <div style="color:#fff;font-size:20px;font-weight:500;line-height:1;">Andaluz</div>
+          <div style="color:rgba(255,255,255,0.45);font-size:12px;margin-top:2px;">Consultoria de Investimentos</div>
+        </div>
+      </div>
+    </div>
+    <!-- Card -->
+    <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:28px 24px;">
+      <div style="color:#fff;font-size:15px;font-weight:500;margin-bottom:4px;">Dashboard Financeiro</div>
+      <div style="color:rgba(255,255,255,0.45);font-size:12px;margin-bottom:20px;">Acesso restrito</div>
+      <div style="position:relative;">
+        <input
+          id="pwd-input"
+          type="password"
+          placeholder="Senha"
+          onkeydown="if(event.key==='Enter')checkPwd()"
+          style="
+            width:100%;padding:11px 40px 11px 14px;
+            background:rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.18);
+            border-radius:7px;color:#fff;font-size:14px;
+            font-family:'DM Sans',sans-serif;outline:none;
+            box-sizing:border-box;
+          "
+        />
+        <button onclick="togglePwd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:rgba(255,255,255,0.4);">
+          <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div id="pwd-error" style="color:#e07070;font-size:12px;margin-top:8px;min-height:16px;"></div>
+      <button onclick="checkPwd()" style="
+        width:100%;margin-top:8px;padding:11px;
+        background:#cc8c4c;border:none;border-radius:7px;
+        color:#fff;font-size:14px;font-weight:500;
+        cursor:pointer;font-family:'DM Sans',sans-serif;
+        transition:opacity 0.15s;
+      " onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+        Entrar
+      </button>
+    </div>
+    <div style="color:rgba(255,255,255,0.2);font-size:11px;margin-top:20px;">www.andaluzinvestimentos.com.br</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const HASH='a0afb89cef8de7d721918e4167bb3eb769ea6c30c938f7f22ef0bc9b88f8f673';
+  function sha256hex(str){
+    // Simple hash check via SubtleCrypto
+    const enc=new TextEncoder();
+    return crypto.subtle.digest('SHA-256',enc.encode(str)).then(buf=>{
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    });
+  }
+  window.checkPwd=function(){
+    const val=document.getElementById('pwd-input').value;
+    const err=document.getElementById('pwd-error');
+    if(!val){err.textContent='Digite a senha.';return;}
+    sha256hex(val).then(h=>{
+      if(h===HASH){
+        document.getElementById('lock-screen').style.display='none';
+        sessionStorage.setItem('andlz_auth','1');
+      } else {
+        err.textContent='Senha incorreta.';
+        document.getElementById('pwd-input').value='';
+        document.getElementById('pwd-input').focus();
+      }
+    });
+  };
+  window.togglePwd=function(){
+    const inp=document.getElementById('pwd-input');
+    inp.type=inp.type==='password'?'text':'password';
+  };
+  // Se já autenticado nesta sessão, pula a tela
+  if(sessionStorage.getItem('andlz_auth')==='1'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      const ls=document.getElementById('lock-screen');
+      if(ls) ls.style.display='none';
+    });
+  }
+  // Foco automático no campo
+  document.addEventListener('DOMContentLoaded',()=>{
+    const ls=document.getElementById('lock-screen');
+    if(ls && ls.style.display!=='none'){
+      document.getElementById('pwd-input').focus();
+    }
+  });
+})();
+</script>
+
 <div class="app">
 <aside class="sidebar">
   <div class="logo-wrap"><div class="logo-name">Andlz</div><div class="logo-sub">Demonstrações 2026</div></div>
@@ -174,15 +281,19 @@
       <div class="period-control">
         <span class="period-label">De:</span>
         <select class="period-select" id="sel-from">
-          <option value="0">Jan</option><option value="1">Fev</option>
-          <option value="2">Mar</option><option value="3">Abr</option>
-        <option value="4" selected>Mai</option>
+          <option value="0">Jan</option>
+          <option value="1">Fev</option>
+          <option value="2">Mar</option>
+          <option value="3">Abr</option>
+          <option value="4">Mai</option>
         </select>
         <span class="period-label">Até:</span>
         <select class="period-select" id="sel-to">
-          <option value="0">Jan</option><option value="1">Fev</option>
-          <option value="2">Mar</option><option value="3">Abr</option>
-        <option value="4" selected>Mai</option>
+          <option value="0">Jan</option>
+          <option value="1">Fev</option>
+          <option value="2">Mar</option>
+          <option value="3">Abr</option>
+          <option value="4" selected>Mai</option>
         </select>
       </div>
       <span class="badge badge-real">● Realizado</span>
@@ -480,213 +591,161 @@ const NAVY='#003354', BRONZE='#cc8c4c', BRONZE_T='rgba(204,140,76,0.45)', NAVY_T
 
 // Data injected from Demonstrac_o_es_2026_final.xlsx — 5 meses realizados (Jan–Mai/2026)
 const RAW = {
-  // ── CONSOLIDATED DRE (Consolidated sheet) ──
-  recBruta:    [295046.17, 237394.00, 274171.35, 300220.63, 280659.47, 0,0,0,0,0,0,0],
-  consultoria: [175559.20, 177140.28, 184550.54, 191454.82, 195739.19, 0,0,0,0,0,0,0],
-  planejamento:[14700, 18900, 10400, 6500, 6500, 0,0,0,0,0,0,0],
-  tesouroMT:   [34000, 0, 34000, 34000, 34000, 0,0,0,0,0,0,0],
-  rpps:        [27823.24, 6238.62, 0, 30425.54, 0, 0,0,0,0,0,0,0],
-  consulta:    [375, 750, 600, 1200, 0, 0,0,0,0,0,0,0],
-  valuation:   [0,0,0,0,0,0,0,0,0,0,0,0],
-  cambio:      [2129.24, 4080.01, 7882.59, 3358.51, 4335.02, 0,0,0,0,0,0,0],
-  consorcio:   [11277.60, 11277.60, 11277.60, 11277.60, 11277.60, 0,0,0,0,0,0,0],
-  previdencia: [4958.36, 4860.28, 6325.28, 5913.91, 2187.12, 0,0,0,0,0,0,0],
-  segVida:     [20365.39, 11096.95, 13782.61, 11693.06, 19858.71, 0,0,0,0,0,0,0],
-  outrosRamos: [3858.14, 3050.26, 5352.73, 4397.19, 6761.83, 0,0,0,0,0,0,0],
-  deducoes:    [-199415.55,-124090.19,-138181.44,-198046.44,-128726.11, 0,0,0,0,0,0,0],
-  imp_vendas:  [-102113.50,-21801.44,-27344.44,-91514.16,-23264.24, 0,0,0,0,0,0,0],
-  com_consult: [-89450.63,-91876.31,-98268.03,-95663.76,-91912.33, 0,0,0,0,0,0,0],
-  com_mesa:    [-5749.27,-5695.28,-7461.40,-5965.22,-8479.87, 0,0,0,0,0,0,0],
-  descontos:   [0,-2730,-420,-1880.43,-840, 0,0,0,0,0,0,0],
-  devolucoes:  [-1163.72,-1319.61,-3923.62,-1950.63,-3298.79, 0,0,0,0,0,0,0],
-  com_parc:    [-938.43,-667.55,-763.95,-1072.24,-930.88, 0,0,0,0,0,0,0],
-  recLiq:      [95630.62, 113303.81, 135989.91, 102174.19, 151933.36, 0,0,0,0,0,0,0],
-  custos:      [-64872.26,-63769.76,-66416.09,-64575.13,-85976.89, 0,0,0,0,0,0,0],
-  sal_enc:     [-25338.15,-35150.71,-27030.51,-28209.13,-32604.23, 0,0,0,0,0,0,0],
-  sistemas_c:  [-15523.46,-9519.05,-13097.35,-10678.38,-9918.70, 0,0,0,0,0,0,0],
-  custo_MT:    [-21367.88,-19100.00,-26235.23,-25581.62,-37735.46, 0,0,0,0,0,0,0],
-  custo_rpps:  [-1119.18,0,0,0,0, 0,0,0,0,0,0,0],
-  regulatorias:[-1523.59,0,-53,-106,-5718.50, 0,0,0,0,0,0,0],
-  lucroBruto:  [30758.36, 49534.05, 69573.82, 37599.06, 65956.47, 0,0,0,0,0,0,0],
-  despOp:      [-23481.50,-23332.25,-25476.40,-21131.77,-19711.42, 0,0,0,0,0,0,0],
-  imovel:      [-10767.65,-7850.30,-8253.59,-8252.46,-8184.48, 0,0,0,0,0,0,0],
-  servicos:    [-4432.61,-4617.94,-4617.94,-4617.94,-4617.94, 0,0,0,0,0,0,0],
-  comerciais:  [-2598.88,-3404.37,-5667.76,-3002.49,-1595.19, 0,0,0,0,0,0,0],
-  admin:       [-2058.78,-3995.84,-3193.74,-2495.51,-2050.44, 0,0,0,0,0,0,0],
-  colabor:     [-2716.72,-2556.94,-2836.51,-1856.51,-2356.51, 0,0,0,0,0,0,0],
-  diretoria:   [-906.86,-906.86,-906.86,-906.86,-906.86, 0,0,0,0,0,0,0],
-  lucroOp:     [7276.86, 26201.80, 44097.42, 16467.29, 46245.05, 0,0,0,0,0,0,0],
-  financeiras: [-1262.86,-973.20,-337.75,-751.96,804.13, 0,0,0,0,0,0,0],
-  outras_nd:   [8.63,1.89,0.60,3.45,0, 0,0,0,0,0,0,0],
-  lucroLiq:    [6022.63, 25230.49, 43760.27, 15718.78, 47049.18, 0,0,0,0,0,0,0],
-  inv_emp:     [-10236.57,-10119.25,-8739.58,-10636.86,-9270.03, 0,0,0,0,0,0,0],
-  inv_imob:    [0,-278.09,0,-558.89,0, 0,0,0,0,0,0,0],
-  emprestimos: [-10236.57,-9841.16,-8739.58,-10077.97,-9270.03, 0,0,0,0,0,0,0],
-  lucroFinal:  [-4213.94, 15111.24, 35020.69, 5081.92, 37779.15, 0,0,0,0,0,0,0],
-  ebitda:      [109390.36, 48003.24, 71441.86, 107981.45, 69509.29, 0,0,0,0,0,0,0],
-
-  // Margens realizadas (de Consolidated sheet)
-  margEBITDA:  [37.08, 20.22, 26.06, 35.97, 24.77],
-  margBruta:   [10.42, 20.87, 25.38, 12.52, 23.50],
-  margLiq:     [2.04,  10.63, 15.96,  5.24, 16.76],
-  margFinal:   [-1.43,  6.37, 12.77,  1.69, 13.46],
-
-  // Projeção (07T Lucro Final da aba Projeção)
-  projFinal:   [null,null,null,null,null, 41075.99,-10293.98,29088.27,30202.77,-16298.44,32518.19,33720.34],
-  projCaixa:   [328679.42,347025.92,394427.54,392377.01,441571.19,432647.18,372353.20,351441.48,381644.24,365345.80,397863.99,431584.33],
-  // Linha "Caixa" da aba Projeção (realizado + projetado contínuo)
-  projCaixaLinha62: [328679.42, 326651.91, 359161.59, 358806.96, 423235.48, 414311.47, 354017.49, 333105.77, 363308.53, 347010.09, 379528.28, 413248.62],
-
-  // AuM (Projeção sheet)
-  realAuM:     [290504767, 304511145, 310161143, 312606596, 312069591],
-  projAuM:     [null,null,null,null,null, 299258523,305243694,258882980,264060639,269341852,274728689,280223263],
-  metaAuM:     280000000,
-  realROA:     [1.2188, 0.9355, 1.0608, 1.1525, 1.0792],
-  realCaixa:   [328679.42, 326651.91, 359161.59, 358806.96, 423235.48],
-
-  // Orçamento 2026
-  orcRecBruta: [279259.03,256047.53,294399.48,296283.11,301098.86,281145.55,285658.55,252239.24,256174.11,260187.68,264281.52,268457.23],
-  orcDeducoes: [-199589.30,-137961.51,-145202.12,-196058.15,-149020.76,-137647.38,-192931.44,-121170.78,-123413.66,-173345.70,-128034.88,-130415.03],
-  orcCustos:   [-64908.31,-65198.56,-65490.11,-65782.96,-66077.12,-66372.60,-66669.40,-66967.52,-67266.98,-67567.78,-67869.92,-68173.42],
-  orcDespOp:   [-23355.48,-23459.92,-23564.82,-23670.20,-23776.05,-23882.36,-23989.16,-24096.43,-24204.18,-24312.42,-24421.14,-24530.34],
-  orcLucroOp:  [-8594.06,29427.55,60142.43,10771.80,62224.93,53243.21,2068.55,40004.51,41289.29,-5038.22,43955.58,45338.44],
-  orcFinal:    [-20679.63,18346.50,47401.62,-2050.53,49194.18,41075.99,-10293.98,29088.27,30202.77,-16298.44,32518.19,33720.34],
-  orcMargEBITDA:[37.08,20.22,26.06,35.97,24.77, 32.94,33.18,29.86,30.12,30.38,30.63,30.89],
-
-  // CNS
-  cnsRB:       [252457.44, 203028.90, 229550.54, 263580.36, 236239.19],
-  cnsRL:       [74114.66,  96338.11,  108477.56,  91716.34,  125477.92],
-  cnsFinal:    [-6440.22,  22353.49,  24293.55,  12600.47,  33024.32],
-  cnsConsult:  [175559.20, 177140.28, 184550.54, 191454.82, 195739.19],
-  cnsPlan:     [14700, 18900, 10400, 6500, 6500],
-  cnsMT:       [34000, 0, 34000, 34000, 34000],
-  cnsRPPS:     [27823.24, 6238.62, 0, 30425.54, 0],
-  cnsConsulta: [375, 750, 600, 1200, 0],
-
-  // CRR
-  crrRB:       [42588.73, 34365.10, 44620.81, 36640.27, 44420.28],
-  crrRL:       [21515.96, 16965.70, 27512.35, 10457.85, 26455.44],
-  crrFinal:    [2226.28, -7242.25, 10727.14, -7518.55, 4754.83],
-  crrCambio:   [2129.24, 4080.01, 7882.59, 3358.51, 4335.02],
-  crrConsorcio:[11277.60, 11277.60, 11277.60, 11277.60, 11277.60],
-  crrPrevid:   [4958.36, 4860.28, 6325.28, 5913.91, 2187.12],
-  crrSegVida:  [20365.39, 11096.95, 13782.61, 11693.06, 19858.71],
-
-  // Consultores (da aba Receita — valores diretos por consultor por mês)
-  consultores: [
-    {n:'Augusto',  v:[50753.71, 56342.50, 57208.41, 57069.25, 57868.47, 0,0,0,0,0,0,0]},
-    {n:'Lamour',   v:[37845.62, 34519.25, 38219.94, 42347.39, 40000.03, 0,0,0,0,0,0,0]},
-    {n:'Sidney',   v:[29385.47, 29374.00, 29385.47, 28993.70, 29232.47, 0,0,0,0,0,0,0]},
-    {n:'Gaioso',   v:[29098.64, 28086.87, 28244.31, 28699.06, 37481.04, 0,0,0,0,0,0,0]},
-    {n:'Andaluz',  v:[34555.78, 7145.08,  33000.00, 33500.00, 35600.00, 0,0,0,0,0,0,0]},
-    {n:'Pedro',    v:[13312.09, 14869.96, 16284.90, 18975.32, 15929.80, 0,0,0,0,0,0,0]},
-    {n:'Cristiano',v:[12738.43, 11614.62, 12858.35, 12990.19, 12990.19, 0,0,0,0,0,0,0]},
-    {n:'Bruno',    v:[750, 750, 750, 750, 750, 0,0,0,0,0,0,0]},
+  recBruta:[295046.17,237394.0,274171.35,300220.63,280659.47,0,0,0,0,0,0,0],
+  consultoria:[175559.2,177140.28,184550.54,191454.82,195739.19,0,0,0,0,0,0,0],
+  planejamento:[14700.0,18900.0,10400.0,6500.0,6500.0,0,0,0,0,0,0,0],
+  tesouroMT:[34000.0,0.0,34000.0,34000.0,34000.0,0,0,0,0,0,0,0],
+  rpps:[27823.24,6238.62,0.0,30425.54,0.0,0,0,0,0,0,0,0],
+  consulta:[375.0,750.0,600.0,1200.0,0.0,0,0,0,0,0,0,0],
+  valuation:[0.0,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0],
+  cambio:[2129.24,4080.01,7882.59,3358.51,4335.02,0,0,0,0,0,0,0],
+  consorcio:[11277.6,11277.6,11277.6,11277.6,11277.6,0,0,0,0,0,0,0],
+  previdencia:[4958.36,4860.28,6325.28,5913.91,2187.12,0,0,0,0,0,0,0],
+  segVida:[20365.39,11096.95,13782.61,11693.06,19858.71,0,0,0,0,0,0,0],
+  outrosRamos:[3858.14,3050.26,5352.73,4397.19,6761.83,0,0,0,0,0,0,0],
+  deducoes:[-199415.55,-124090.19,-138181.44,-198046.44,-128726.11,0,0,0,0,0,0,0],
+  imp_vendas:[-102113.5,-21801.44,-27344.44,-91514.16,-23264.24,0,0,0,0,0,0,0],
+  com_consult:[-89450.63,-91876.31,-98268.03,-95663.76,-91912.33,0,0,0,0,0,0,0],
+  com_mesa:[-5749.27,-5695.28,-7461.4,-5965.22,-8479.87,0,0,0,0,0,0,0],
+  descontos:[0.0,-2730.0,-420.0,-1880.43,-840.0,0,0,0,0,0,0,0],
+  devolucoes:[-1163.72,-1319.61,-3923.62,-1950.63,-3298.79,0,0,0,0,0,0,0],
+  com_parc:[-938.43,-667.55,-763.95,-1072.24,-930.88,0,0,0,0,0,0,0],
+  recLiq:[95630.62,113303.81,135989.91,102174.19,151933.36,0,0,0,0,0,0,0],
+  custos:[-64872.26,-63769.76,-66416.09,-64575.13,-85976.89,0,0,0,0,0,0,0],
+  sal_enc:[-25338.15,-35150.71,-27030.51,-28209.13,-32604.23,0,0,0,0,0,0,0],
+  sistemas_c:[-15523.46,-9519.05,-13097.35,-10678.38,-9918.7,0,0,0,0,0,0,0],
+  custo_MT:[-21367.88,-19100.0,-26235.23,-25581.62,-37735.46,0,0,0,0,0,0,0],
+  custo_rpps:[-1119.18,0.0,0.0,0.0,0.0,0,0,0,0,0,0,0],
+  regulatorias:[-1523.59,0.0,-53.0,-106.0,-5718.5,0,0,0,0,0,0,0],
+  lucroBruto:[30758.36,49534.05,69573.82,37599.06,65956.47,0,0,0,0,0,0,0],
+  despOp:[-23481.5,-23332.25,-25476.4,-21131.77,-19711.42,0,0,0,0,0,0,0],
+  imovel:[-10767.65,-7850.3,-8253.59,-8252.46,-8184.48,0,0,0,0,0,0,0],
+  servicos:[-4432.61,-4617.94,-4617.94,-4617.94,-4617.94,0,0,0,0,0,0,0],
+  comerciais:[-2598.88,-3404.37,-5667.76,-3002.49,-1595.19,0,0,0,0,0,0,0],
+  admin:[-2058.78,-3995.84,-3193.74,-2495.51,-2050.44,0,0,0,0,0,0,0],
+  colabor:[-2716.72,-2556.94,-2836.51,-1856.51,-2356.51,0,0,0,0,0,0,0],
+  diretoria:[-906.86,-906.86,-906.86,-906.86,-906.86,0,0,0,0,0,0,0],
+  lucroOp:[7276.86,26201.8,44097.42,16467.29,46245.05,0,0,0,0,0,0,0],
+  financeiras:[-1262.86,-973.2,-337.75,-751.96,804.13,0,0,0,0,0,0,0],
+  outras_nd:[8.63,1.89,0.6,3.45,0.0,0,0,0,0,0,0,0],
+  lucroLiq:[6022.63,25230.49,43760.27,15718.78,47049.18,0,0,0,0,0,0,0],
+  inv_emp:[-10236.57,-10119.25,-8739.58,-10636.86,-9270.03,0,0,0,0,0,0,0],
+  inv_imob:[0.0,-278.09,0.0,-558.89,0.0,0,0,0,0,0,0,0],
+  emprestimos:[-10236.57,-9841.16,-8739.58,-10077.97,-9270.03,0,0,0,0,0,0,0],
+  lucroFinal:[-4213.94,15111.24,35020.69,5081.92,37779.15,0,0,0,0,0,0,0],
+  ebitda:[109390.36,48003.24,71441.86,107981.45,69509.29,0,0,0,0,0,0,0],
+  margEBITDA:[37.0757,20.2209,26.0574,35.9674,24.7664],
+  margBruta:[10.4249,20.8658,25.376,12.5238,23.5005],
+  margLiq:[2.0413,10.6281,15.9609,5.2357,16.7638],
+  margFinal:[-1.4282,6.3655,12.7733,1.6927,13.4608],
+  projFinal:[null,null,null,null,null,40848.11531,-10421.037401,28852.230169,29962.001832,-16433.983224,32267.699974,33464.835853],
+  projCaixa:[-20679.633121,18346.502021,47179.401916,-2239.46135,48966.307319,40848.11531,-10421.037401,28852.230169,29962.001832,-16433.983224,32267.699974,33464.835853],
+  projCaixaLinha62:[328679.42,326651.91,359161.59,358806.96,423235.48,414083.59531,353662.557908,332514.788077,362476.789909,346042.806685,378310.50666,411775.342513],
+  realAuM:[290504767,304511145,309415143,311856596,312069591],
+  projAuM:[null,null,null,null,null,298493523,304463393,258102679,263264733,268530027,273900628,279378641],
+  metaAuM:280000000,
+  realROA:[0.012188,0.009355,0.010633,0.011552,0.010792],
+  realCaixa:[328679.42,326651.91,359161.59,358806.96,423235.48],
+  orcRecBruta:[279259.028353,256047.534136,293824.871203,295705.416609,300509.608941,280556.304859,285057.514957,251628.873793,255551.535269,259552.649974,263633.786974,267796.546713],
+  orcDeducoes:[-199589.295692,-137961.507958,-144874.590085,-195694.386989,-148684.890597,-137311.50727,-192483.47685,-120822.871562,-123058.788603,-172873.699427,-127665.672075,-130038.445127],
+  orcCustos:[-64908.31,-65198.56042,-65490.108752,-65782.9608,-66077.122395,-66372.599391,-66669.397672,-66967.523145,-67266.981746,-67567.779435,-67869.922202,-68173.416059],
+  orcDespOp:[-23355.48,-23459.918675,-23564.824368,-23670.199167,-23776.045171,-23882.364487,-23989.15923,-24096.431527,-24204.183514,-24312.417335,-24421.135146,-24530.339109],
+  orcLucroOp:[-8594.057339,29427.547084,59895.347998,10557.869653,61971.550779,52989.833712,1915.481205,39742.047558,41021.581406,-5201.246223,43677.057552,45054.346418],
+  orcFinal:[-20679.633121,18346.502021,47179.401916,-2239.46135,48966.307319,40848.11531,-10421.037401,28852.230169,29962.001832,-16433.983224,32267.699974,33464.835853],
+  orcMargEBITDA:[33.4884,25.493,34.3847,34.3939,34.6222,32.8874,33.1266,29.7939,30.0522,30.31,30.5673,30.8241],
+  cnsRB:[252457.44,203028.9,229550.54,263580.36,236239.19,0,0,0,0,0,0,0],
+  cnsRL:[74114.66,96338.11,108477.56,91716.34,125477.92,0,0,0,0,0,0,0],
+  cnsFinal:[-6440.22,22353.49,24293.55,12600.47,33024.32,0,0,0,0,0,0,0],
+  cnsConsult:[0,0,0,0,0,0,0,0,0,0,0,0],
+  cnsPlan:[0,0,0,0,0,0,0,0,0,0,0,0],
+  cnsMT:[0,0,0,0,0,0,0,0,0,0,0,0],
+  cnsRPPS:[21016.433078,4963.321254,0.0,24205.950893,0.0,0,0,0,0,0,0,0],
+  cnsConsulta:[0,0,0,0,0,0,0,0,0,0,0,0],
+  crrRB:[42588.73,34365.1,44620.81,36640.27,44420.28,0,0,0,0,0,0,0],
+  crrRL:[21515.96,16965.7,27512.35,10457.85,26455.44,0,0,0,0,0,0,0],
+  crrFinal:[2226.28,-7242.25,10727.14,-7518.55,4754.83,0,0,0,0,0,0,0],
+  crrCambio:[0,0,0,0,0,0,0,0,0,0,0,0],
+  crrConsorcio:[0,0,0,0,0,0,0,0,0,0,0,0],
+  crrPrevid:[0,0,0,0,0,0,0,0,0,0,0,0],
+  crrSegVida:[0,0,0,0,0,0,0,0,0,0,0,0],
+  consultores:[
+    {n:"Augusto",v:[77065.02,85270.28,87690.26,81688.16,89283.61,0,0,0,0,0,0,0]},
+    {n:"Lamour",v:[58161.75,38281.55,40049.21,46322.78,45741.98,0,0,0,0,0,0,0]},
+    {n:"Andaluz",v:[70127.41,9688.96,36774.77,64504.46,39773.95,0,0,0,0,0,0,0]},
+    {n:"Gaioso",v:[30306.65,29207.66,29316.49,30987.66,38809.97,0,0,0,0,0,0,0]},
+    {n:"Sidney",v:[31108.96,31208.83,32396.22,30442.1,33282.2,0,0,0,0,0,0,0]},
+    {n:"Pedro",v:[16104.05,26730.08,30069.95,23267.65,18649.56,0,0,0,0,0,0,0]},
+    {n:"Cristiano",v:[14266.7,12360.65,14042.19,17007.88,14053.69,0,0,0,0,0,0,0]},
+    {n:"Bruno",v:[1490.95,796.48,796.48,994.32,881.27,0,0,0,0,0,0,0]},
   ],
-
-  // Gastos analíticos (aba Gastos)
-  gastosAll: [
-    {n:'Comissões',   v:[101634,102890,110025,107627,110618], excl:true},
-    {n:'Impostos',    v:[93724,21801,27344,91514,23264],      excl:true},
-    {n:'PLR/Bônus',   v:[177017,0,0,0,0],                    excl:true},
-    {n:'Salários',    v:[25338,35151,27031,28209,32604],      excl:false},
-    {n:'Mato Grosso', v:[21368,19100,26235,25582,37735],      excl:false},
-    {n:'Sistemas',    v:[15523,9519,13097,10678,9919],        excl:false},
-    {n:'Desp. Op.',   v:[23482,23332,25476,21132,19711],      excl:false},
-    {n:'Financeiras', v:[2157,973,338,752,0],                 excl:false},
-    {n:'RPPS',        v:[1119,0,0,0,0],                      excl:false},
-    {n:'Regulatórias',v:[1524,0,53,106,5719],                excl:false},
+  gastosAll:[
+    {n:"Sal\u00e1rios e Encargos",v:[25338.15,35150.71,27030.51,28209.13,32604.23,0,0,0,0,0,0,0],excl:false},
+    {n:"Mato Grosso",v:[21367.88,19100.0,26235.23,25581.62,37735.46,0,0,0,0,0,0,0],excl:false},
+    {n:"Sistemas",v:[15523.46,9519.05,13097.35,10678.38,9918.7,0,0,0,0,0,0,0],excl:false},
+    {n:"Desp. Operacionais",v:[23481.5,23332.25,25476.4,21131.77,19711.42,0,0,0,0,0,0,0],excl:false},
+    {n:"Financeiras",v:[1262.86,973.2,337.75,751.96,804.13,0,0,0,0,0,0,0],excl:false},
+    {n:"Regulat\u00f3rias",v:[1523.59,0.0,53.0,106.0,5718.5,0,0,0,0,0,0,0],excl:false},
+    {n:"Comiss\u00f5es",v:[89450.63,91876.31,98268.03,95663.76,91912.33,0,0,0,0,0,0,0],excl:true},
+    {n:"Impostos s/ Vendas",v:[102113.5,21801.44,27344.44,91514.16,23264.24,0,0,0,0,0,0,0],excl:true},
   ],
-
-  // Histórico trimestral (H. Receita)
-  histLabels:['1T22','2T22','3T22','4T22','1T23','2T23','3T23','4T23','1T24','2T24','3T24','4T24','1T25','2T25','3T25','4T25','1T26','2T26'],
-  histVals:  [51026,-128685,63264,2033,-13021,1864,10423,-31621,-2865,16411,48720,57951,-4983,42552,84773,154230,45918,42861],
-  histRecLabels:['Jan22','Jul22','Jan23','Jul23','Jan24','Jul24','Jan25','Jul25','Jan26','Mai26'],
-  histRecVals:  [113542,92137,101362,123015,198683,206803,163796,252664,295046,280659],
-
-  // AuM histórico anual (Dez de cada ano)
-  aumHistLabels:['2020','2021','2022','2023','2024','2025'],
-  aumHistVals:  [73497000,102792000,132093000,197800000,204764000,310965744],
-
-  // AuM histórico mensal completo
+  histLabels:["1T22", "1T23", "1T24", "1T25", "1T26", "2T22", "2T23", "2T24", "2T25", "2T26", "3T22", "3T23", "3T24", "3T25", "3T26", "4T22", "4T23", "4T24", "4T25", "4T26"],
+  histVals:[53889.81,-21634.29,1355.71,10519.04,77576.08,-124790.61,6918.46,17906.51,75770.61,62712.34,10593.95,15045.69,68401.41,127000.83,0.0,6634.33,-29589.95,68923.94,184795.57,0.0],
+  histRecLabels:[],
+  histRecVals:[],
+  aumHistLabels:["2020", "2021", "2022", "2023", "2024", "2025"],
+  aumHistVals:[73497000,102791730,132092873,197799896,204764492,310965744],
   aumRawSeries:[
-    {y:2020,m:[0.14,1.67,7.99,10.28,14.28,23.63,45.94,52.03,55.49,57.59,62.32,73.50]},
-    {y:2021,m:[78.00,80.13,83.35,85.17,84.23,84.04,83.51,88.41,91.59,89.28,90.21,102.79]},
-    {y:2022,m:[102.90,104.95,108.97,111.46,114.55,110.47,114.89,121.04,120.05,124.51,124.75,132.09]},
-    {y:2023,m:[139.28,154.46,170.38,172.77,177.77,186.83,191.84,203.25,189.46,191.32,192.60,197.80]},
-    {y:2024,m:[198.68,201.65,205.12,214.97,201.98,204.04,206.80,212.11,194.72,197.48,204.03,204.76]},
-    {y:2025,m:[216.09,240.22,245.78,268.70,271.20,286.80,292.46,295.79,300.67,304.09,306.82,310.97]},
-    {y:2026,m:[290.50,304.51,310.16,312.61,312.07]},
+    {y:2020,m:[0.14,1.67,7.99,10.28,14.28,23.63,45.94,52.03,55.49,57.59,62.32,73.5]},
+    {y:2021,m:[78.0,80.13,83.34,85.17,84.23,84.04,83.5,88.41,91.59,89.28,90.21,102.79]},
+    {y:2022,m:[102.9,104.95,108.97,111.46,114.55,110.47,114.89,121.04,120.05,124.51,124.75,132.09]},
+    {y:2023,m:[139.28,154.46,170.38,172.77,177.77,186.83,191.84,203.25,189.46,191.32,192.6,197.8]},
+    {y:2024,m:[198.68,201.65,205.12,214.97,201.98,204.04,206.8,212.11,194.72,197.48,204.03,204.76]},
+    {y:2025,m:[216.09,240.22,245.78,268.7,271.2,286.8,292.46,295.79,300.67,304.09,306.82,310.97]},
+    {y:2026,m:[290.5,304.51,309.42,311.86,312.07]},
   ],
-
-  // Sistemas (aba Sistemas — valores corretos)
   sistemas:[
-    {n:'Gorila',          cat:'Consolidação',  v:3057},
-    {n:'Exclusive',       cat:'Corporativo',   v:1358.30},
-    {n:'MS Office',       cat:'Corporativo',   v:1133.14},
-    {n:'Felipe Bubble',   cat:'Próprio',       v:781.16},
-    {n:'Broadcast',       cat:'Investimentos', v:800},
-    {n:'PPRO MSFT',       cat:'Corporativo',   v:187},
-    {n:'ChatGPT',         cat:'IA',            v:105.50},
-    {n:'Adobe Pro',       cat:'Marketing',     v:95},
-    {n:'Power BI',        cat:'Próprio',       v:93.50},
-    {n:'Clicksign',       cat:'Corporativo',   v:108.57},
-    {n:'Ponto Eletr.',    cat:'Corporativo',   v:71.07},
-    {n:'WhatsApp Biz',    cat:'Corporativo',   v:55},
+    {n:"Gorila",cat:"Consolida\u00e7\u00e3o",v:3057.0},
+    {n:"PPRO MSFT",cat:"Corporativos",v:187.0},
+    {n:"Microsoft Office",cat:"Corporativos",v:1133.14},
+    {n:"Wpp",cat:"Corporativos",v:55.0},
+    {n:"Ponto eletr\u00f4nico",cat:"Corporativos",v:71.07},
+    {n:"Clicksign",cat:"Corporativos",v:108.57},
+    {n:"Exclusive",cat:"Corporativos",v:1358.3},
+    {n:"Power BI",cat:"Pr\u00f3prios",v:93.5},
+    {n:"Felipe Bubble e dash",cat:"Pr\u00f3prios",v:781.16},
+    {n:"Broadcast",cat:"Investimentos",v:800.0},
+    {n:"ChatGPT",cat:"IA",v:105.5},
+    {n:"ADOBE PRO",cat:"Marketing",v:95.0},
   ],
-  numClientes: 255,
-
-  // Captação — aba Captação (dados mensais Jan–Mai/26, zeros para meses futuros)
-  // Linha 5: Número de clientes | Linha 6: Captação líquida | Linha 7: Ticket Médio | Linha 8: Saldo de clientes
-  // Linha 10: Novos contratos | Linha 11: Renovações | Linha 12: Entrada de clientes
-  // Linha 14: Retiradas | Linha 15: Cancelamentos | Linha 16: Saída de clientes
-  captacao: {
-    // Último mês (pTo) para cards de snapshot
-    numClientes:   [247, 251, 254, 257, 255, 0,0,0,0,0,0,0],   // linha 5
-    captLiquida:   [-21263977, 13701377, 4903998, 2441453, 212995, 0,0,0,0,0,0,0],  // linha 6
-    ticketMedio:   [1176132.66, 1213191.81, 1218169.85, 1213449.79, 1223802.32, 0,0,0,0,0,0,0], // linha 7
-    saldoClientes: [6, 4, 3, 3, -2, 0,0,0,0,0,0,0],             // linha 8
-    // Captação Bruta (soma para período)
-    captBruta:      [5736023, 13701377, 5520326, 2441453, 1227995, 0,0,0,0,0,0,0], // linha 9
-    novosContratos: [5380559, 1250000, 2315000, 977000, 0, 0,0,0,0,0,0,0],         // linha 10
-    renovacoes:     [355464, 12451377, 3205326, 1464453, 1227995, 0,0,0,0,0,0,0],  // linha 11
-    entradaClientes:[10, 4, 6, 3, 0, 0,0,0,0,0,0,0],                               // linha 12
-    // Churn (soma para período)
-    churnTotal:     [27000000, 0, 616328, 0, 1015000, 0,0,0,0,0,0,0],              // linha 13
-    retiradas:      [26700000, 0, 616328, 0, 0, 0,0,0,0,0,0,0],                    // linha 14
-    cancelamento:   [300000, 0, 0, 0, 1015000, 0,0,0,0,0,0,0],                     // linha 15
-    saidaClientes:  [4, 0, 3, 0, 2, 0,0,0,0,0,0,0],                               // linha 16
+  numClientes:255,
+  captacao:{
+    numClientes:[247.0,251.0,254.0,257.0,255.0,0,0,0,0,0,0,0],
+    captLiquida:[-21263977.0,13701377.0,4903998.0,2441453.0,212995.0,0,0,0,0,0,0,0],
+    ticketMedio:[1176132.659919,1213191.812749,1218169.854331,1213449.789883,1223802.317647,0,0,0,0,0,0,0],
+    saldoClientes:[6.0,4.0,3.0,3.0,-2.0,0,0,0,0,0,0,0],
+    captBruta:[5736023.0,13701377.0,5520326.0,2441453.0,1227995.0,0,0,0,0,0,0,0],
+    novosContratos:[5380559.0,1250000.0,2315000.0,977000.0,0.0,0,0,0,0,0,0,0],
+    renovacoes:[355464.0,12451377.0,3205326.0,1464453.0,1227995.0,0,0,0,0,0,0,0],
+    entradaClientes:[10.0,4.0,6.0,3.0,0.0,0,0,0,0,0,0,0],
+    churnTotal:[27000000.0,0.0,616328.0,0.0,1015000.0,0,0,0,0,0,0,0],
+    retiradas:[26700000.0,0.0,616328.0,0.0,0.0,0,0,0,0,0,0,0],
+    cancelamento:[300000.0,0.0,0.0,0.0,1015000.0,0,0,0,0,0,0,0],
+    saidaClientes:[4.0,0.0,3.0,0.0,2.0,0,0,0,0,0,0,0],
   },
-
-  // DCF — aba "DCF Andlz"
-  dcf: {
-    ebitdaBase:    989083.67,     // B4
-    wacc:          0.25,          // B5
-    txCrescAnual:  0.30,          // B6
-    txCrescPerp:   0.05,          // B7
-    pctFCF:        0.3651,        // B8
-    // Projeção FCF (linhas 10-15)
-    fcfRows: [
-      {Item:'EBITDA Projetado',      '2027':'R$ 1.285.809', '2028':'R$ 1.671.551', '2029':'R$ 2.173.017', '2030':'R$ 2.824.922', '2031':'R$ 3.672.398', 'Perpetuidade':'–'},
-      {Item:'Fluxo de Caixa Livre',  '2027':'R$ 469.495',  '2028':'R$ 610.343',  '2029':'R$ 793.446',  '2030':'R$ 1.031.480', '2031':'R$ 1.340.924', 'Perpetuidade':'R$ 7.039.850'},
-      {Item:'Fator de Desconto',     '2027':'0,8000',       '2028':'0,6400',       '2029':'0,5120',       '2030':'0,4096',       '2031':'0,3277',       'Perpetuidade':'0,3277'},
-      {Item:'FCF Descontado',        '2027':'R$ 375.596',  '2028':'R$ 390.620',  '2029':'R$ 406.244',  '2030':'R$ 422.494',  '2031':'R$ 439.394',  'Perpetuidade':'R$ 2.306.818'},
-    ],
-    // Valuation (linhas 18-24)
-    valRows: [
-      {Item:'Soma FCF Descontados – Fase 1 (Anos 1–5)', Valor:'R$ 2.034.348'},
-      {Item:'Valor Terminal Descontado',                 Valor:'R$ 2.306.818'},
-      {Item:'Valor da Empresa (Enterprise Value)',       Valor:'R$ 4.341.166'},
-      {Item:'(+) Caixa',                                Valor:'R$ 431.584'},
-      {Item:'(-) Dívida',                               Valor:'-R$ 550.000'},
-      {Item:'Valor Final da Empresa',                   Valor:'R$ 4.222.750'},
-    ],
+  dcf:{
+    ebitdaBase:986594.666649,
+    wacc:0.25,
+    txCrescAnual:0.3,
+    txCrescPerp:0.05,
+    pctFCF:0.364372,
+    fcfRows:[{"Item": "PROJEÇÃO DE FLUXO DE CAIXA LIVRE", "2027": "–", "2028": "–", "2029": "–", "2030": "–", "2031": "–", "Perpetuidade": "–"}, {"Item": "Item", "2027": "2027", "2028": "2028", "2029": "2029", "2030": "2030", "2031": "2031", "Perpetuidade": "Perpetuidade"}, {"Item": "EBITDA Projetado", "2027": "1282573.0666435685", "2028": "1667344.986636639", "2029": "2167548.4826276307", "2030": "2817813.02741592", "2031": "3663156.935640696", "Perpetuidade": "–"}, {"Item": "Fluxo de Caixa Livre (FCF)", "2027": "467333.7781158104", "2028": "607533.9115505535", "2029": "789794.0850157195", "2030": "1026732.3105204355", "2031": "1334752.003676566", "Perpetuidade": "7007448.019301971"}, {"Item": "Fator de Desconto", "2027": "0.8", "2028": "0.64", "2029": "0.512", "2030": "0.4096", "2031": "0.32768", "Perpetuidade": "0.32768"}, {"Item": "FCF Descontado", "2027": "373867.02249264834", "2028": "388821.70339235425", "2029": "404374.57152804843", "2030": "420549.5543891704", "2031": "437371.5365647372", "Perpetuidade": "2296200.5669648703"}],
+    valRows:[{"Item": "VALUATION", "Valor": "–"}, {"Item": "Soma FCF Descontados – Fase 1 (Anos 1–5)", "Valor": "2024984.3883669586"}, {"Item": "Valor Terminal Descontado", "Valor": "2296200.5669648703"}, {"Item": "Valor da Empresa (Enterprise Value)", "Valor": "4321184.955331828"}, {"Item": "Caixa", "Valor": "429472.03241872747"}, {"Item": "Dívida", "Valor": "-550000"}, {"Item": "Valor final da Empresa", "Valor": "4200656.987750556"}],
   },
 };
 
 
 // ── PERIOD STATE ──
-let pFrom = 0, pTo = 4; // 0-indexed — Mai/26 = index 4
+let pFrom = 0, pTo = 4; // Mai/26
 
 function slicePeriod(arr) { return arr.slice(pFrom, pTo+1); }
 function sumPeriod(arr) { return slicePeriod(arr).reduce((a,b)=>a+(b||0),0); }
