@@ -313,32 +313,38 @@ def read_aum_hist(n):
 # ── CNS ───────────────────────────────────────────────────────
 def read_cns(n):
     ws = wb['CNS']
-    def get(label): r = find_row(ws,label,1); return arr12(row_vals(ws,r,2) if r else [0]*12, n)
+    # Labels col 1, data col 2 = Jan
+    def get(label):
+        r = find_row(ws, label, 1)
+        return arr12(row_vals(ws, r, 2) if r else [0]*12, n)
     return {
         'cnsRB':      get('01 Receitas Operacionais'),
         'cnsRL':      get('02T Receita Líquida'),
         'cnsFinal':   get('07T Lucro / Prejuízo Final'),
-        'cnsConsult': get('Consultoria'),
-        'cnsPlan':    get('Planejamento'),
-        'cnsMT':      get('Tesouro Mato Grosso'),
-        'cnsRPPS':    get('RPPS'),
-        'cnsConsulta':get('Consulta'),
+        # Sublinhas com prefixo 01.X
+        'cnsConsult': get('01.1 Consultoria'),
+        'cnsPlan':    get('01.2 Planejamento'),
+        'cnsMT':      get('01.3 Tesouro Mato Grosso'),
+        'cnsRPPS':    get('01.4 RPPS'),
+        'cnsConsulta':get('01.5 Consulta'),
     }
 
 # ── CRR ───────────────────────────────────────────────────────
 def read_crr(n):
     ws = wb['CRR']
-    # Labels in col 1, data starts col 2
-    # Sublines use prefixes like "01.1 Câmbio/Bancários"
-    def get(label): r = find_row(ws,label,1); return arr12(row_vals(ws,r,2) if r else [0]*12, n)
+    # Labels col 1, data col 2 = Jan
+    def get(label):
+        r = find_row(ws, label, 1)
+        return arr12(row_vals(ws, r, 2) if r else [0]*12, n)
     return {
         'crrRB':       get('01 Receitas Operacionais'),
         'crrRL':       get('02T Receita Líquida'),
         'crrFinal':    get('07T Lucro / Prejuízo Final'),
-        'crrCambio':   get('01.1 Câmbio'),          # FIX: prefix 01.1
-        'crrConsorcio':get('01.2 Consórcio'),        # FIX: prefix 01.2
-        'crrPrevid':   get('01.3 Previdência'),      # FIX: prefix 01.3 (or try without)
-        'crrSegVida':  get('01.4 Seguro'),           # FIX: prefix 01.4
+        # Sublinhas com prefixo 01.X
+        'crrCambio':   get('01.1 Câmbio'),
+        'crrConsorcio':get('01.2 Consórcio'),
+        'crrPrevid':   get('01.3 Previdência'),
+        'crrSegVida':  get('01.4 Seguro'),
     }
 
 # ── RECEITA (consultores) ─────────────────────────────────────
