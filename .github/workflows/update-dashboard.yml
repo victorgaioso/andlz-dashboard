@@ -48,6 +48,40 @@ jobs:
           SIZE=$(wc -c < dashboard_andlz.html)
           echo "HTML gerado com sucesso: ${SIZE} bytes"
 
+      - name: Detectar mês de referência
+        id: find_month
+        run: |
+          cat > /tmp/find_month.py << 'PYEOF'
+          import openpyxl, sys, os
+
+          xlsx_file = sys.argv[1]
+          months = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
+
+          wb = openpyxl.load_workbook(xlsx_file, data_only=True)
+          ws = wb["Consolidated"]
+
+          rec_row = None
+          for r in range(1, 100):
+              val = ws.cell(r, 4).value
+              if val and "01 Receitas" in str(val):
+                  rec_row = r
+                  break
+
+          month_label = "N/D"
+          if rec_row:
+              n_realized = 0
+              for i in range(12):
+                  cell_val = ws.cell(rec_row, 5 + i).value
+                  if cell_val not in (None, 0):
+                      n_realized += 1
+              if n_realized > 0:
+                  month_label = f"{months[n_realized - 1]}/26"
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"month={month_label}\n")
+          PYEOF
+          python /tmp/find_month.py "${{ steps.find_xlsx.outputs.xlsx_file }}"
+
       - name: Commit e push do dashboard atualizado
         run: |
           git config user.name  "GitHub Actions"
@@ -56,9 +90,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "Sem alterações no dashboard — nenhum commit necessário"
           else
-            MONTH=$(python -c "
-          import openpyxl, sys
-          wb = openpyxl.load_workbook('${{ steps.find_xlsx.outputs.xlsx_file }}', data_only=True)
-          ws = wb['Consolidated']
-          for r in range(1,100):
-              if ws.cell(r,4).value and '01 Receitas' in
+            git commit -m "Atualizar dashboard - ${{ steps.find_month.outputs.month }}"
+            git push
+          fi
